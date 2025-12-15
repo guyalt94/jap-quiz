@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Japanese ROMAJI Quiz (200)</title>
+
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+
+  <style>
+    :root{
+      --bg:#0b1020; --txt:#eaf0ff; --muted:#a9b7e6;
+      --good:#2dd4bf; --bad:#fb7185; --accent:#60a5fa;
+      --shadow: 0 10px 35px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(96,165,250,.22), transparent 60%),
+                  radial-gradient(900px 500px at 100% 40%, rgba(45,212,191,.16), transparent 55%),
+                  var(--bg);
+      color:var(--txt);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .wrap{width:min(920px, 100%);}
+    .topbar{display:flex; gap:12px; align-items:stretch; flex-wrap:wrap; margin-bottom:12px;}
+    .pill{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      padding:10px 12px;
+      border-radius:999px;
+      display:flex; gap:10px; align-items:center;
+      box-shadow: 0 6px 20px rgba(0,0,0,.22);
+    }
+    .pill b{font-weight:700}
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.07);
+      color:var(--txt);
+      padding:10px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      display:flex; align-items:center; gap:8px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .06s ease, background .2s ease;
+    }
+    .btn:active{transform: scale(.98)}
+    .btn.primary{background:rgba(96,165,250,.18); border-color:rgba(96,165,250,.35)}
+    .btn.good{background:rgba(45,212,191,.16); border-color:rgba(45,212,191,.35)}
+    .btn.bad{background:rgba(251,113,133,.14); border-color:rgba(251,113,133,.35)}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:16px 16px 12px;
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      background: linear-gradient(180deg, rgba(17,26,51,.95), rgba(17,26,51,.65));
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .title{display:flex; flex-direction:column; gap:4px;}
+    .title h1{margin:0; font-size:18px; letter-spacing:.2px}
+    .title .sub{color:var(--muted); font-size:13px}
+    .content{padding:16px;}
+    .qbox{
+      background: rgba(17,26,51,.55);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding:14px;
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      margin-bottom:14px;
+    }
+    .word{font-size:36px; font-weight:850; letter-spacing:.4px; line-height:1.1; text-align:right;}
+    .hint{font-size:12px; color:var(--muted); margin-top:4px;}
+    .rightControls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-start;}
+    .answers{display:grid; grid-template-columns: 1fr; gap:10px;}
+    @media(min-width:680px){ .answers{grid-template-columns: 1fr 1fr;} .word{font-size:42px} }
+    .opt{
+      background: rgba(15,23,48,.60);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding:14px 14px;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      user-select:none; -webkit-tap-highlight-color: transparent;
+      transition: transform .06s ease, border-color .15s ease, background .15s ease;
+      min-height:56px;
+    }
+    .opt:active{transform:scale(.99)}
+    .opt .label{font-size:16px; font-weight:650}
+    .opt .tag{
+      font-size:12px; color:rgba(255,255,255,.72);
+      padding:4px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      white-space:nowrap;
+    }
+    .opt.correct{border-color: rgba(45,212,191,.65); background: rgba(45,212,191,.10)}
+    .opt.wrong{border-color: rgba(251,113,133,.65); background: rgba(251,113,133,.10)}
+    .feedback{
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .feedback .msg{font-weight:650}
+    .feedback.good{border-color: rgba(45,212,191,.45); background: rgba(45,212,191,.08)}
+    .feedback.bad{border-color: rgba(251,113,133,.45); background: rgba(251,113,133,.08)}
+    .mini{font-size:12px; color:var(--muted)}
+    .footerRow{margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center;}
+    .toggle{
+      display:flex; gap:8px; align-items:center;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      padding:8px 10px;
+      border-radius: 14px;
+    }
+    .toggle input{transform: scale(1.2)}
+    .smallLink{color: var(--muted); text-decoration: underline; cursor:pointer;}
+    .kbd{
+      font-size:12px; color:rgba(255,255,255,.85);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      border-radius: 10px; padding: 6px 10px;
+    }
+    .modalBackdrop{position:fixed; inset:0; background: rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:18px; z-index:9999;}
+    .modal{width:min(760px, 100%); background: rgba(17,26,51,.96); border:1px solid rgba(255,255,255,.12); border-radius: 18px; box-shadow: var(--shadow); overflow:hidden;}
+    .modalHeader{padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,.08);}
+    .modalHeader b{font-size:15px}
+    .modalBody{padding:14px 16px; color: var(--txt)}
+    .modalBody p{margin:0 0 10px; color: var(--muted); line-height:1.55}
+    .list{margin:0; padding-right:18px; color: var(--muted)}
+    .list li{margin: 6px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="pill"><b>Japanese ROMAJI Quiz</b><span class="mini">200 מילים • תשובות בעברית</span></div>
+      <div class="pill"><span>נכון:</span> <b id="okCount">0</b> <span class="mini">|</span> <span>לא נכון:</span> <b id="badCount">0</b></div>
+      <div class="pill"><span>רצף:</span> <b id="streak">0</b> <span class="mini">|</span> <span>ידעתי:</span> <b id="knownCount">0</b></div>
+      <button class="btn primary" id="speakBtn" title="שמע את המילה">🔊 שמע</button>
+      <button class="btn good" id="knewBtn" title="סמן שידעתי (יחזור פחות)">✅ ידעתי</button>
+      <button class="btn" id="skipBtn" title="דלג">⏭️ דלג</button>
+      <button class="btn" id="helpBtn" title="עזרה">❓</button>
+      <button class="btn bad" id="resetBtn" title="אפס התקדמות">🗑️ איפוס</button>
+    </div>
+
+    <div class="card">
+      <div class="cardHeader">
+        <div class="title">
+          <h1>מה המשמעות של המילה?</h1>
+          <div class="sub">טעות לא “תוקעת” יותר — גם בטעות ממשיך אוטומטית אחרי רגע.</div>
+        </div>
+        <div class="kbd" id="progress">שאלה 1 / ∞</div>
+      </div>
+
+      <div class="content">
+        <div class="qbox">
+          <div>
+            <div class="word" id="word">...</div>
+            <div class="hint" id="hint">טיפ: האודיו עובד הכי טוב כשמדליקים “הגייה יפנית (Kana)”</div>
+          </div>
+          <div class="rightControls">
+            <div class="toggle">
+              <input type="checkbox" id="autoSpeak" />
+              <label for="autoSpeak">אודיו אוטומטי</label>
+            </div>
+            <div class="toggle">
+              <input type="checkbox" id="hardMode" />
+              <label for="hardMode">מצב קשה</label>
+            </div>
+            <div class="toggle">
+              <input type="checkbox" id="kanaSpeak" />
+              <label for="kanaSpeak">הגייה יפנית (Kana)</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="answers" id="answers"></div>
+
+        <div class="feedback" id="feedback" style="display:none;">
+          <div>
+            <div class="msg" id="fbMsg">...</div>
+            <div class="mini" id="fbMini">...</div>
+          </div>
+          <div class="mini">המשך אוטומטי…</div>
+        </div>
+
+        <div class="footerRow">
+          <div class="mini">שמירה אוטומטית במכשיר.</div>
+          <div class="smallLink" id="exportBtn">ייצוא/ייבוא התקדמות</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modalBackdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modalHeader">
+        <b id="modalTitle">עזרה</b>
+        <button class="btn" id="closeModal">סגור</button>
+      </div>
+      <div class="modalBody" id="modalBody"></div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const WORDS = [["hai", "כן"], ["iie", "לא"], ["arigatou", "תודה"], ["doumo", "תודה/היי"], ["sumimasen", "סליחה/תודה"], ["gomen", "סליחה"], ["onegai", "בבקשה (בקשה)"], ["kudasai", "בבקשה (תן לי)"], ["ohayou", "בוקר טוב"], ["konnichiwa", "שלום"], ["konbanwa", "ערב טוב"], ["oyasumi", "לילה טוב"], ["ja ne", "יאללה ביי"], ["mata ne", "נתראה"], ["sayounara", "שלום/להתראות"], ["genki", "מרגיש טוב/אנרגטי"], ["watashi", "אני"], ["boku", "אני (גברי)"], ["anata", "אתה/את"], ["kare", "הוא/חבר"], ["kanojo", "היא/חברה"], ["minna", "כולם"], ["tomodachi", "חבר"], ["hito", "אדם"], ["namae", "שם"], ["doko", "איפה"], ["itsu", "מתי"], ["nani", "מה"], ["dare", "מי"], ["naze", "למה"], ["dou", "איך"], ["ikura", "כמה עולה"], ["kore", "זה (קרוב אליי)"], ["sore", "זה (קרוב אליך)"], ["are", "זה (שם רחוק)"], ["koko", "פה"], ["soko", "שם לידך"], ["asoko", "שם רחוק"], ["kocchi", "כאן/לכאן"], ["socchi", "שם/לשם"], ["ima", "עכשיו"], ["kyou", "היום"], ["ashita", "מחר"], ["kinou", "אתמול"], ["mainichi", "כל יום"], ["hayai", "מהיר/מוקדם"], ["osoi", "איטי/מאוחר"], ["sugu", "מיד"], ["yukkuri", "לאט"], ["chotto", "קצת"], ["takusan", "הרבה"], ["sukoshi", "מעט"], ["zenzen", "בכלל לא"], ["mou", "כבר/עוד"], ["mada", "עדיין"], ["issho", "ביחד"], ["daijoubu", "בסדר/הכל טוב"], ["ii", "טוב"], ["warui", "רע"], ["omoshiroi", "מעניין/מצחיק"], ["tsumaranai", "משעמם"], ["muzukashii", "קשה"], ["kantan", "קל"], ["taihen", "קשה/מתיש"], ["ureshii", "שמח"], ["kanashii", "עצוב"], ["kowai", "מפחיד"], ["hazukashii", "מביך"], ["honto", "באמת"], ["uso", "שקר"], ["yabai", "בעייתי/מטורף"], ["sugoi", "מדהים"], ["taberu", "לאכול"], ["nomu", "לשתות"], ["iku", "ללכת"], ["kuru", "לבוא"], ["kaeru", "לחזור הביתה"], ["miru", "לראות"], ["kiku", "לשמוע/לשאול"], ["iu", "להגיד"], ["hanasu", "לדבר"], ["yomu", "לקרוא"], ["kaku", "לכתוב"], ["kau", "לקנות"], ["harau", "לשלם"], ["motsu", "להחזיק"], ["ageru", "לתת"], ["morau", "לקבל"], ["shiru", "לדעת"], ["wakaru", "להבין"], ["oboeru", "לזכור"], ["wasureru", "לשכוח"], ["tsukau", "להשתמש"], ["tsukuru", "לבנות/להכין"], ["benkyou", "ללמוד"], ["hataraku", "לעבוד"], ["yasumu", "לנוח"], ["neru", "לישון"], ["okiru", "לקום"], ["aruku", "ללכת ברגל"], ["hashiru", "לרוץ"], ["suwaru", "לשבת"], ["tatsu", "לעמוד"], ["matsu", "לחכות"], ["hajimeru", "להתחיל"], ["owaru", "להסתיים"], ["akeru", "לפתוח"], ["shimeru", "לסגור"], ["ireru", "להכניס"], ["dasu", "להוציא"], ["toru", "לקחת"], ["suteru", "לזרוק"], ["denwa", "טלפון"], ["keitai", "נייד"], ["pasokon", "מחשב"], ["kamera", "מצלמה"], ["memo", "פתק"], ["jikan", "זמן"], ["toki", "רגע/זמן"], ["ima sugu", "עכשיו מיד"], ["kane", "כסף"], ["okane", "כסף (מנומס)"], ["saifu", "ארנק"], ["kaado", "כרטיס"], ["shiharai", "תשלום"], ["yasui", "זול"], ["takai", "יקר/גבוה"], ["nedan", "מחיר"], ["mise", "חנות"], ["resutoran", "מסעדה"], ["kafe", "קפה"], ["pan", "לחם"], ["gohan", "אורז/ארוחה"], ["mizu", "מים"], ["ocha", "תה ירוק"], ["biiru", "בירה"], ["wain", "יין"], ["osake", "אלכוהול/סאקה"], ["nabe", "סיר/תבשיל"], ["niku", "בשר"], ["sakana", "דג"], ["yasai", "ירקות"], ["kudamono", "פירות"], ["tamago", "ביצה"], ["shio", "מלח"], ["satou", "סוכר"], ["koohii", "קפה"], ["gyuunyuu", "חלב"], ["chokoreeto", "שוקולד"], ["aisu", "גלידה"], ["oishii", "טעים"], ["mazui", "לא טעים"], ["atatakai", "חמים"], ["tsumetai", "קר"], ["atsui", "חם"], ["samui", "קר (מזג אוויר)"], ["ame", "גשם"], ["yuki", "שלג"], ["kaze", "רוח"], ["tenki", "מזג אוויר"], ["haru", "אביב"], ["natsu", "קיץ"], ["aki", "סתיו"], ["fuyu", "חורף"], ["asa", "בוקר"], ["hiru", "צהריים"], ["yoru", "לילה"], ["konshuu", "השבוע"], ["raishuu", "שבוע הבא"], ["senshuu", "שבוע שעבר"], ["kotoshi", "השנה"], ["rainen", "שנה הבאה"], ["kyonen", "שנה שעברה"], ["getsu", "חודש"], ["shuu", "שבוע"], ["hi", "יום"], ["toshokan", "ספרייה"], ["gakkou", "בית ספר"], ["daigaku", "אוניברסיטה"], ["kaisha", "חברה/עבודה"], ["ie", "בית"], ["heya", "חדר"], ["toire", "שירותים"], ["ofuro", "אמבטיה"], ["kagi", "מפתח"], ["kutsu", "נעליים"], ["kaban", "תיק"], ["kasa", "מטרייה"], ["doa", "דלת"], ["mado", "חלון"], ["isu", "כיסא"], ["tsukue", "שולחן"], ["michi", "דרך"], ["eki", "תחנה"], ["densha", "רכבת"], ["basu", "אוטובוס"], ["kuruma", "רכב"], ["takushii", "מונית"], ["hikouki", "מטוס"], ["fune", "ספינה"], ["chikatetsu", "רכבת תחתית"], ["hoteru", "מלון"], ["yoyaku", "הזמנה"], ["passport", "דרכון"], ["ryokou", "טיול"], ["chizu", "מפה"], ["kippu", "כרטיס נסיעה"], ["iriguchi", "כניסה"], ["deguchi", "יציאה"], ["hidari", "שמאל"], ["migi", "ימין"], ["mae", "קדימה/לפני"], ["ushiro", "מאחורה"], ["ue", "למעלה"], ["shita", "למטה"], ["chikai", "קרוב"], ["tooi", "רחוק"], ["mou sukoshi", "עוד קצת"], ["koko desu", "זה פה"], ["tasukete", "עזרה!"], ["abunai", "מסוכן"], ["daijina", "חשוב"], ["hontou ni", "באמת"], ["yoku", "טוב/לעיתים קרובות"], ["sukina", "אהוב/אוהב"], ["kirai", "שונא/לא אוהב"], ["hoshii", "רוצה (חפץ)"], ["tabetai", "רוצה לאכול"], ["nomitai", "רוצה לשתות"], ["ikitai", "רוצה ללכת"], ["mitai", "רוצה לראות"], ["nemui", "עייף/ישנוני"], ["isogashii", "עסוק"], ["himana", "פנוי"], ["tired", "עייף"], ["byouki", "חולה"], ["itai", "כואב"], ["kimochi", "הרגשה"], ["atama", "ראש"], ["te", "יד"], ["ashi", "רגל"], ["me", "עין"], ["mimi", "אוזן"], ["hana", "אף"], ["kuchi", "פה"], ["ha", "שן"], ["onaka", "בטן"], ["se", "גב"], ["motto", "יותר"], ["chigau", "שונה/לא זה"], ["atteiru", "נכון/מתאים"], ["machigai", "טעות"], ["wakatta", "הבנתי"], ["shiranai", "לא יודע"], ["ii yo", "סבבה/כן"], ["dame", "אסור/לא טוב"], ["kawaii", "חמוד"], ["kakkoii", "מגניב"], ["kirei", "יפה/נקי"], ["kitanai", "מלוכלך"], ["atarashii", "חדש"], ["furui", "ישן"], ["ookii", "גדול"], ["chiisai", "קטן"], ["nagai", "ארוך"], ["mijikai", "קצר"], ["takusan", "הרבה"], ["sukunai", "מעט"], ["akarui", "בהיר"], ["kurai", "חשוך"], ["omoi", "כבד"], ["karui", "קל (משקל)"], ["iro", "צבע"], ["shiroi", "לבן"], ["kuroi", "שחור"], ["akai", "אדום"], ["aoi", "כחול"], ["kiiroi", "צהוב"], ["midori", "ירוק"], ["pink", "ורוד"], ["ichi", "אחד"], ["ni", "שתיים"], ["san", "שלוש"], ["yon", "ארבע"], ["go", "חמש"], ["roku", "שש"], ["nana", "שבע"], ["hachi", "שמונה"], ["kyuu", "תשע"], ["juu", "עשר"], ["hyaku", "מאה"], ["sen", "אלף"], ["man", "עשרת אלפים"], ["zero", "אפס"], ["hanbun", "חצי"], ["zenbu", "הכל"]];
+  // ---- app logic ----
+
+  const LS_KEY = "jp_romaji_he_quiz_v2";
+  const defaultState = { ok:0, bad:0, streak:0, known:{}, seen:{}, hardMode:false, autoSpeak:false, kanaSpeak:true, lastWord:null, totalQuestions:0 };
+  const $ = (id) => document.getElementById(id);
+  let state = loadState();
+  let current = null;
+  let locked = false;
+
+  function loadState(){
+    try{ const raw = localStorage.getItem(LS_KEY); if(!raw) return structuredClone(defaultState);
+      const parsed = JSON.parse(raw); return {...structuredClone(defaultState), ...parsed};
+    }catch{ return structuredClone(defaultState); }
+  }
+  function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch{} renderStats(); }
+
+  function renderStats(){
+    $("okCount").textContent = state.ok;
+    $("badCount").textContent = state.bad;
+    $("streak").textContent = state.streak;
+    $("knownCount").textContent = Object.keys(state.known).length;
+    $("hardMode").checked = !!state.hardMode;
+    $("autoSpeak").checked = !!state.autoSpeak;
+    $("kanaSpeak").checked = !!state.kanaSpeak;
+    $("progress").textContent = `שאלה ${state.totalQuestions + 1} / ∞`;
+  }
+
+  function pickNextWord(){
+    const items = WORDS.map(([w,m]) => ({w, m}));
+    const weights = items.map(it => {
+      const seen = state.seen[it.w] || 0;
+      const isKnown = !!state.known[it.w];
+      const isLast = (it.w === state.lastWord);
+      let weight = 1 / (1 + seen);
+      if(isKnown) weight *= 0.18;
+      if(isLast) weight *= 0.05;
+      if(state.hardMode){
+        weight *= 1 / (1 + seen*0.9);
+        if(isKnown) weight *= 0.12;
+      }
+      return Math.max(weight, 0.0005);
+    });
+    const total = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random() * total;
+    for(let i=0;i<items.length;i++){ r -= weights[i]; if(r <= 0) return items[i]; }
+    return items[items.length-1];
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+  }
+
+  function buildQuestion(){
+    const picked = pickNextWord();
+    const correct = picked.m;
+    const pool = WORDS.map(x => x[1]).filter(m => m !== correct);
+    const opts = new Set([correct]);
+    while(opts.size < 4){
+      const m = pool[Math.floor(Math.random()*pool.length)];
+      opts.add(m);
+    }
+    const options = Array.from(opts);
+    shuffle(options);
+
+    current = { word: picked.w, meaning: correct, options, correctIndex: options.indexOf(correct) };
+    state.lastWord = picked.w;
+    state.seen[picked.w] = (state.seen[picked.w] || 0) + 1;
+    saveState();
+  }
+
+  function renderQuestion(){
+    locked = false;
+    $("word").textContent = current.word;
+    $("feedback").style.display = "none";
+    $("answers").innerHTML = "";
+
+    current.options.forEach((opt, idx) => {
+      const div = document.createElement("div");
+      div.className = "opt";
+      div.setAttribute("role","button");
+      div.tabIndex = 0;
+
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = opt;
+
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.textContent = `#${idx+1}`;
+
+      div.appendChild(label);
+      div.appendChild(tag);
+
+      const handler = () => choose(idx, div);
+      div.addEventListener("click", handler);
+      div.addEventListener("keydown", (e) => { if(e.key === "Enter" || e.key === " ") handler(); });
+
+      $("answers").appendChild(div);
+    });
+
+    if(state.autoSpeak){ speak(current.word); }
+  }
+
+  function showFeedback(kind, msg, mini){
+    const fb = $("feedback");
+    fb.className = "feedback " + kind;
+    $("fbMsg").textContent = msg;
+    $("fbMini").textContent = mini || "";
+    fb.style.display = "flex";
+  }
+
+  function choose(idx, clickedEl){
+    if(locked) return;
+    locked = true;
+
+    const optionsEls = Array.from(document.querySelectorAll(".opt"));
+    const correctEl = optionsEls[current.correctIndex];
+    const isCorrect = (idx === current.correctIndex);
+
+    if(isCorrect){
+      clickedEl.classList.add("correct");
+      state.ok += 1;
+      state.streak += 1;
+      showFeedback("good", "נכון! ✅", `המשמעות: ${current.meaning}`);
+      saveState();
+      setTimeout(() => nextQuestion(), 450);
+    }else{
+      clickedEl.classList.add("wrong");
+      correctEl.classList.add("correct");
+      state.bad += 1;
+      state.streak = 0;
+      showFeedback("bad", "לא נכון ❌", `התשובה הנכונה: ${current.meaning}`);
+      saveState();
+      setTimeout(() => nextQuestion(), 1200);
+    }
+  }
+
+  function nextQuestion(){
+    locked = false;
+    state.totalQuestions += 1;
+    saveState();
+    buildQuestion();
+    renderQuestion();
+  }
+
+  // Audio: romaji -> hiragana for better iOS pronunciation
+  let voices = [];
+  function loadVoices(){ voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
+  if(window.speechSynthesis){ loadVoices(); window.speechSynthesis.onvoiceschanged = loadVoices; }
+  function pickJaVoice(){
+    if(!voices || !voices.length) return null;
+    const ja = voices.filter(v => (v.lang || "").toLowerCase().startsWith("ja"));
+    return ja[0] || null;
+  }
+
+  const R2H = [
+    ["kyo","きょ"],["kyu","きゅ"],["kya","きゃ"],
+    ["sho","しょ"],["shu","しゅ"],["sha","しゃ"],
+    ["cho","ちょ"],["chu","ちゅ"],["cha","ちゃ"],
+    ["nyo","にょ"],["nyu","にゅ"],["nya","にゃ"],
+    ["hyo","ひょ"],["hyu","ひゅ"],["hya","ひゃ"],
+    ["myo","みょ"],["myu","みゅ"],["mya","みゃ"],
+    ["ryo","りょ"],["ryu","りゅ"],["rya","りゃ"],
+    ["gyo","ぎょ"],["gyu","ぎゅ"],["gya","ぎゃ"],
+    ["byo","びょ"],["byu","びゅ"],["bya","びゃ"],
+    ["pyo","ぴょ"],["pyu","ぴゅ"],["pya","ぴゃ"],
+    ["jo","じょ"],["ju","じゅ"],["ja","じゃ"],
+    ["tsu","つ"],["shi","し"],["chi","ち"],["fu","ふ"],
+    ["ka","か"],["ki","き"],["ku","く"],["ke","け"],["ko","こ"],
+    ["sa","さ"],["su","す"],["se","せ"],["so","そ"],
+    ["ta","た"],["te","て"],["to","と"],
+    ["na","な"],["ni","に"],["nu","ぬ"],["ne","ね"],["no","の"],
+    ["ha","は"],["hi","ひ"],["he","へ"],["ho","ほ"],
+    ["ma","ま"],["mi","み"],["mu","む"],["me","め"],["mo","も"],
+    ["ya","や"],["yu","ゆ"],["yo","よ"],
+    ["ra","ら"],["ri","り"],["ru","る"],["re","れ"],["ro","ろ"],
+    ["wa","わ"],["wo","を"],
+    ["ga","が"],["gi","ぎ"],["gu","ぐ"],["ge","げ"],["go","ご"],
+    ["za","ざ"],["ji","じ"],["zu","ず"],["ze","ぜ"],["zo","ぞ"],
+    ["da","だ"],["de","で"],["do","ど"],
+    ["ba","ば"],["bi","び"],["bu","ぶ"],["be","べ"],["bo","ぼ"],
+    ["pa","ぱ"],["pi","ぴ"],["pu","ぷ"],["pe","ぺ"],["po","ぽ"],
+    ["a","あ"],["i","い"],["u","う"],["e","え"],["o","お"],
+    ["n","ん"]
+  ];
+
+  function normalizeRomaji(s){
+    return (s || "").toLowerCase().replace(/[^a-z\s]/g, "").trim().replace(/\s+/g, " ");
+  }
+
+  function romajiToHiragana(input){
+    let s = normalizeRomaji(input).replace(/\s/g, "");
+    if(!s) return "";
+    s = s.replace(/([bcdfghjklmnpqrstvwxyz])\1/g, "っ$1");
+    let out = "";
+    while(s.length){
+      let matched = false;
+      for(const [r,h] of R2H){
+        if(s.startsWith(r)){
+          out += h;
+          s = s.slice(r.length);
+          matched = true;
+          break;
+        }
+      }
+      if(!matched){ out += s[0]; s = s.slice(1); }
+    }
+    return out;
+  }
+
+  function speak(romaji){
+    if(!window.speechSynthesis){ flashHint("אין תמיכת אודיו בדפדפן הזה 😕"); return; }
+    try{
+      window.speechSynthesis.cancel();
+      const text = state.kanaSpeak ? romajiToHiragana(romaji) : normalizeRomaji(romaji);
+      const u = new SpeechSynthesisUtterance(text || romaji);
+      u.lang = "ja-JP";
+      const v = pickJaVoice();
+      if(v) u.voice = v;
+      u.rate = 0.95;
+      u.pitch = 1.0;
+      window.speechSynthesis.speak(u);
+    }catch{ flashHint("האודיו נחסם. נסה ללחוץ שוב אחרי טאץ׳."); }
+  }
+
+  function flashHint(msg){
+    const old = $("hint").textContent;
+    $("hint").textContent = msg;
+    setTimeout(() => $("hint").textContent = old, 1800);
+  }
+
+  $("speakBtn").addEventListener("click", () => speak(current?.word || ""));
+  $("skipBtn").addEventListener("click", () => nextQuestion());
+
+  $("knewBtn").addEventListener("click", () => {
+    if(!current) return;
+    state.known[current.word] = true;
+    saveState();
+    showFeedback("good", "סומן כ'ידעתי' ✅", "המילה תחזור בתדירות נמוכה בהרבה.");
+    setTimeout(() => nextQuestion(), 700);
+  });
+
+  $("hardMode").addEventListener("change", (e) => { state.hardMode = e.target.checked; saveState(); });
+  $("autoSpeak").addEventListener("change", (e) => { state.autoSpeak = e.target.checked; saveState(); });
+  $("kanaSpeak").addEventListener("change", (e) => { state.kanaSpeak = e.target.checked; saveState(); });
+
+  $("resetBtn").addEventListener("click", () => {
+    if(!confirm("לאפס הכל?")) return;
+    state = structuredClone(defaultState);
+    saveState();
+    buildQuestion(); renderQuestion();
+  });
+
+  function openModal(title, html){
+    $("modalTitle").textContent = title;
+    $("modalBody").innerHTML = html;
+    $("modalBackdrop").style.display = "flex";
+  }
+  function closeModal(){ $("modalBackdrop").style.display = "none"; }
+
+  $("helpBtn").addEventListener("click", () => {
+    openModal("עזרה", `
+      <p><b>טעות לא עוצרת</b> — גם בטעות ממשיך אוטומטית אחרי 1.2 שניות.</p>
+      <p><b>סאונד לא נשמע נכון?</b> השאר <b>הגייה יפנית (Kana)</b> דולק. זה ממיר ROMAJI ל־ひらがな לפני ההקראה, וזה נשמע הרבה יותר נכון באייפון.</p>
+      <p class="mini">אם האודיו לא יוצא, לחץ פעם אחת על 🔊 (iOS דורש אינטראקציה).</p>
+    `);
+  });
+
+  $("exportBtn").addEventListener("click", () => {
+    const data = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    openModal("ייצוא / ייבוא", `
+      <p class="mini">ייצוא:</p>
+      <textarea id="ex" style="width:100%;height:110px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.25);color:var(--txt);padding:10px;direction:ltr" readonly>${data}</textarea>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn primary" id="copyEx">העתק</button>
+        <button class="btn" id="importBtn">ייבוא</button>
+      </div>
+      <p class="mini" style="margin-top:10px;">ייבוא:</p>
+      <textarea id="im" style="width:100%;height:110px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.25);color:var(--txt);padding:10px;direction:ltr"></textarea>
+    `);
+
+    setTimeout(() => {
+      const copyBtn = document.getElementById("copyEx");
+      const importBtn = document.getElementById("importBtn");
+      const ex = document.getElementById("ex");
+      const im = document.getElementById("im");
+
+      copyBtn?.addEventListener("click", async () => {
+        try{ await navigator.clipboard.writeText(ex.value); }
+        catch{ ex.select(); document.execCommand("copy"); }
+      });
+
+      importBtn?.addEventListener("click", () => {
+        try{
+          const raw = im.value.trim();
+          if(!raw) return;
+          const decoded = decodeURIComponent(escape(atob(raw)));
+          const parsed = JSON.parse(decoded);
+          state = {...structuredClone(defaultState), ...parsed};
+          saveState();
+          buildQuestion(); renderQuestion();
+          closeModal();
+        }catch{ alert("לא הצלחתי לייבא."); }
+      });
+    }, 50);
+  });
+
+  $("closeModal").addEventListener("click", closeModal);
+  $("modalBackdrop").addEventListener("click", (e) => { if(e.target === $("modalBackdrop")) closeModal(); });
+
+  renderStats();
+  buildQuestion();
+  renderQuestion();
+
+})();
+</script>
+
+<script>
+  // PWA offline support (works best after "Add to Home Screen")
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js", { scope: "./" }).catch(() => {});
+    });
+  }
+</script>
+
+</body>
+</html>
